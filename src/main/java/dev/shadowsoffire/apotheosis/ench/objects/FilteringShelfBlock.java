@@ -19,6 +19,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -51,7 +52,7 @@ public class FilteringShelfBlock extends ChiseledBookShelfBlock implements IEnch
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof FilteringShelfTile shelf) {
             Set<Enchantment> blacklist = new HashSet<>();
-            for (ItemStack s : shelf.getBooks()) {
+            for (ItemStack s : shelf.getEnchantBooks()) {
                 Map<Enchantment, Integer> enchants = EnchantmentHelper.getEnchantments(s);
                 if (enchants.size() != 1) continue; // Only books with one enchantment are legal.
                 Enchantment ench = enchants.keySet().stream().findFirst().orElse(null);
@@ -73,7 +74,7 @@ public class FilteringShelfBlock extends ChiseledBookShelfBlock implements IEnch
     public float getEnchantPowerBonus(BlockState state, LevelReader level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof FilteringShelfTile shelf) {
-            return shelf.getBooks().size() * 0.5F;
+            return shelf.getEnchantBooks().size() * 0.5F;
         }
         return 0;
     }
@@ -82,7 +83,7 @@ public class FilteringShelfBlock extends ChiseledBookShelfBlock implements IEnch
     public float getArcanaBonus(BlockState state, LevelReader world, BlockPos pos) {
         BlockEntity be = world.getBlockEntity(pos);
         if (be instanceof FilteringShelfTile shelf) {
-            return shelf.getBooks().size();
+            return shelf.getEnchantBooks().size();
         }
         return 0;
     }
@@ -134,6 +135,10 @@ public class FilteringShelfBlock extends ChiseledBookShelfBlock implements IEnch
     }
 
     public static boolean canInsert(ItemStack stack) {
+        return stack.is(ItemTags.BOOKSHELF_BOOKS);
+    }
+
+    public static boolean isEnchantBook(ItemStack stack) {
         return stack.is(Items.ENCHANTED_BOOK) && EnchantedBookItem.getEnchantments(stack).size() == 1;
     }
 
@@ -160,6 +165,10 @@ public class FilteringShelfBlock extends ChiseledBookShelfBlock implements IEnch
                 if (!stack.isEmpty()) books.add(stack);
             }
             return books;
+        }
+
+        public List<ItemStack> getEnchantBooks() {
+            return getBooks().stream().filter(FilteringShelfBlock::isEnchantBook).toList();
         }
 
         @Override
